@@ -173,6 +173,26 @@ class DotaClient:
                 break
         return result
 
+    def get_winrate(self, player: str | int, *, limit: int = 20) -> dict:
+        """Summarize the latest available matches; unknown outcomes are excluded.
+
+        winrate is a percentage (0..100), or None if no outcomes are known.
+        Fewer than limit matches can be available from the provider.
+        """
+        matches = self.get_matches(player, limit=limit)
+        wins = sum(match["won"] is True for match in matches)
+        losses = sum(match["won"] is False for match in matches)
+        counted = wins + losses
+        return {
+            "requested_matches": limit,
+            "total_matches": len(matches),
+            "counted_matches": counted,
+            "wins": wins,
+            "losses": losses,
+            "unknown_matches": len(matches) - counted,
+            "winrate": round(wins / counted * 100, 2) if counted else None,
+        }
+
     def get_match(self, match: str | int) -> dict:
         """Return raw OpenDota match details by ID or match URL."""
         text = str(match).strip()
